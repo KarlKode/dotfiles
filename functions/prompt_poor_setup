@@ -254,12 +254,9 @@ prompt_poor_git() {
 }
 
 prompt_poor_exectime() {
-  [[ -z ${START_TIME+x} ]] && return
+  integer exec_time=$(( EPOCHSECONDS - ${START_TIME:-$EPOCHSECONDS} ))
+  START_TIME=
 
-  integer exec_time=$(( EPOCHSECONDS - START_TIME ))
-  unset START_TIME
-
-  local t=""
   if [[ exec_time -gt 5 ]]; then
     local human=""
 	  local days=$(( exec_time / 60 / 60 / 24 ))
