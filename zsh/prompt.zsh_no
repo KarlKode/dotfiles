@@ -67,16 +67,67 @@ rb_prompt() {
   fi
 }
 
+python_virtualenv() {
+  if [ $VIRTUAL_ENV ]
+  then
+    echo "`basename $VIRTUAL_ENV`"
+  fi
+}
+
+python_version() {
+  if (( $+commands[python] ))
+  then
+	  echo "$(python --version 2>&1| awk '{print $2}')"
+  else
+    echo ""
+  fi
+}
+
+py_prompt() {
+  if ! [[ -z "$(python_virtualenv)" ]]
+  then
+	  echo "%{$fg_bold[green]%}$(python_virtualenv) ($(python_version))%{$reset_color%} "
+  else
+    echo ""
+  fi
+}
+
+bg_tasks() {
+  local jobs_running
+  jobs_running=$(jobs -l | sed -n '$=')
+  if [[ $jobs_running -gt 0 ]]
+  then
+    echo " : %{$fg_bold[orange]%}${jobs_running}%{$reset_color%}"
+  else
+    echo ""
+  fi
+}
+
+RETVAL=-1
+
+symbols() {
+  if [[ $RETVAL -ne 0 ]]
+  then
+    echo "%{$fg[red]%}¿%{$reset_color%}"
+  elif [[ $UID -eq 0 ]]
+  then
+    echo "%{$fg[magenta]%}»%{$reset_color%}"
+  else
+    echo "›"
+  fi
+}
+
 directory_name() {
   echo "%{$fg_bold[cyan]%}%1/%\/%{$reset_color%}"
 }
 
-export PROMPT=$'\n$(rb_prompt)in $(directory_name) $(git_dirty)$(need_push)\n› '
+export PROMPT=$'\n$(rb_prompt)$(py_prompt)in $(directory_name) $(git_dirty)$(need_push)$(bg_tasks)\n$(symbols) '
 set_prompt () {
   export RPROMPT="%{$fg_bold[cyan]%}%{$reset_color%}"
 }
 
 precmd() {
+  RETVAL=$?
   title "zsh" "%m" "%55<...<%~"
   set_prompt
 }

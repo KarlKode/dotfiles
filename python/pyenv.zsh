@@ -3,3 +3,5 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 pyenv virtualenvwrapper_lazy
 
+export VIRTUAL_ENV_DISABLE_PROMPT=true
+
