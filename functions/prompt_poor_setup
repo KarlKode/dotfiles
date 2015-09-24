@@ -211,19 +211,18 @@ prompt_pure_precmd() {
 
 
 prompt_poor_venv() {
-  print -P ""
 }
 
 prompt_poor_dir() {
-  print -Pn "%F{blue}%~%f"
+  print -n "%F{blue}%~%f"
 }
 
 prompt_poor_git() {
   if [[ -n "$vcs_info_msg_0_" ]]; then
     local color suffix
-    if [[ -n "${vcs_info_msg_3_}${vcs_info_msg_4_}" ]]; then
+    if [[ -n "${vcs_info_msg_2_}" ]]; then
       color=yellow
-      suffix="${vcs_info_msg_3_}${vcs_info_msg_4_}"
+      suffix="${vcs_info_msg_2_}"
     else
       color=green
     fi
@@ -250,7 +249,7 @@ prompt_poor_git() {
       fi
     fi
 
-    print -Pn $out
+    print -n $out
   fi
 }
 
@@ -260,6 +259,7 @@ prompt_poor_exectime() {
   integer exec_time=$(( EPOCHSECONDS - START_TIME ))
   unset START_TIME
 
+  local t=""
   if [[ exec_time -gt 5 ]]; then
     local human=""
 	  local days=$(( exec_time / 60 / 60 / 24 ))
@@ -270,30 +270,52 @@ prompt_poor_exectime() {
 	  (( hours > 0 )) && human+="${hours}h "
 	  (( minutes > 0 )) && human+="${minutes}m "
 	  human+="${seconds}s"
-    print -Pn " %F{yellow}${human}%f"
+    print -n " %F{yellow}${human}%f"
   fi
 }
 
+prompt_poor_time() {
+  local year="$(date +%y)" month="$(date +%m)" day="$(date +%d)" hour="$(date +%H)" minute="$(date +%M)" second="$(date +%S)"
+  print -n "%F{blue}${year}%f%F{green}-%f"
+  print -n "%F{blue}${month}%f%F{green}-%f"
+  print -n "%F{blue}${day}%f%F "
+  print -n "%F{blue}${hour}%f%F{green}:%f"
+  print -n "%F{blue}${minute}%f%F{green}:%f"
+  print -n "%F{blue}${second}%f "
+  #print -n " %F{white}[%f%F{yellow}%!%f%F{white}]%f"
+}
+
 prompt_poor_end() {
-  local out=" "
-  [[ $RETVAL -ne 0 ]] && out="%F{red}$CROSS%f"
-  print -Pn "\n${out} %F{blue}$CARRET%f"
+  if [[ $RETVAL -ne 0 ]]; then
+    print -n "%F{red}$CROSS%f "
+  fi
+  if [[ $UID -eq 0 ]]; then
+    print -n "%F{yellow}$LIGHTNING%f "
+  fi
+  integer num_jobs="$(jobs -p | wc -l | awk '{print $1}')"
+  if [[ $jobs > 0 ]]; then
+    print -n "%F{cyan}$GEAR%f "
+  fi
+  print -n " %F{blue}$CARRET%f"
 }
 
 prompt_poor_ssh() {
-	[[ "$SSH_CONNECTION" != '' ]] && print -Pn '%F{blue}%n%f%F{white}@%f%F{yellow}%m%f '
-}
-
-prompt_poor_time() {
-  print -Pn '$(date +%T) %F{white}[%f%F{yellow}%!%f%F{white}]%f'
+	[[ "$SSH_CONNECTION" != '' ]] && print -n '%F{blue}%n%f%F{white}@%f%F{yellow}%m%f '
 }
 
 prompt_poor() {
+  print ""
   prompt_poor_venv
   prompt_poor_dir
   prompt_poor_git
   prompt_poor_exectime
+  print ""
   prompt_poor_end
+}
+
+prompt_poor_rprompt() {
+  prompt_poor_time
+  prompt_poor_ssh
 }
 
 prompt_poor_precmd() {
@@ -320,10 +342,10 @@ prompt_poor_setup() {
 	add-zsh-hook precmd prompt_poor_precmd
 	add-zsh-hook preexec prompt_poor_preexec
 
-	zstyle ':vcs_info:*' enable git hg bzr
-#	zstyle ':vcs_info:*' use-simple true
+	zstyle ':vcs_info:*' enable bzr git hg svn
+  #	zstyle ':vcs_info:*' use-simple true
 	# only export two msg variables from vcs_info
-	zstyle ':vcs_info:*' max-exports 5
+	zstyle ':vcs_info:*' max-exports 3
   zstyle ':vcs_info:*' unstagedstr "%F{orange}$UNSTAGED%f"
   zstyle ':vcs_info:*' stagedstr "%F{green}$STAGED%f"
   zstyle ':vcs_info:*' check-for-changes true
@@ -331,14 +353,15 @@ prompt_poor_setup() {
   zstyle ':vcs_info:bzr:*' use-server true
 	# vcs_info_msg_0_ = ' %b' (for branch)
 	# vcs_info_msg_1_ = 'x%R' git top level (%R), x-prefix prevents creation of a named path (AUTO_NAME_DIRS)
-	zstyle ':vcs_info:*:*' formats '%b' '%a' 'x%R' '%u' '%c'
-	zstyle ':vcs_info:*:*' actionformats '%b' '%F{white}|%f%F{yellow}%a%f' 'x%R' '%u' '%c'
+	zstyle ':vcs_info:*:*' formats '%b' '%a' '%u%c'
+	zstyle ':vcs_info:*:*' actionformats '%b' '%F{white}|%f%F{yellow}%a%f' '%u%c'
 
 	# show username@host if logged in through SSH
 
   PROMPT='$(prompt_poor) '
   #RPROMPT='%{%f%b%k%}$(prompt_poor_ssh)$(prompt_poor_time)'
   #RPROMPT='$(date +%T) %F{white}[%f%F{yellow}%!%f%F{white}]%f'
+  RPROMPT='%{%f%b%k%}$(prompt_poor_rprompt)%f'
 }
 
 prompt_poor_setup "$@"
