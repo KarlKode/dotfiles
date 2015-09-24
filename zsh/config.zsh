@@ -7,11 +7,12 @@ fi
 #export LSCOLORS="exfxcxdxbxegedabagacad"
 #export CLICOLOR=true
 export TERM=screen-256color
-eval `gdircolors ~/.dircolors`
+#only try to set the colors if the gdircolors executeable is available
+command -v gdircolors > /dev/null 2>&1 && eval `gdircolors ~/.dircolors`
 
-fpath=(/usr/local/share/zsh/functions \
-  /usr/local/share/zsh/site-functions \
-  /usr/local/share/zsh-completions \
+fpath=(~/.zsh/functions \
+  ~/.zsh/site-functions \
+  ~/.zsh/zsh-completions \
   $ZSH/functions $fpath)
 
 autoload -U $ZSH/functions/*(:t)
