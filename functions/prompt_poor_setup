@@ -241,10 +241,10 @@ prompt_poor_git() {
         rev_list=(${(ps:\t:)rev_list})
         integer left=${rev_list[1]} right=${rev_list[2]}
         if [[ ${left}+${right} -gt 0 ]]; then
-          out+="  %F{reset_color}<%f"
+          out+="  %F{magenta}<%f"
           out+="%F{cyan}${left}%f%F{magenta}$ARROW_UP%f"
           out+=":%F{magenta}$ARROW_DOWN%f%F{cyan}${right}%f"
-          out+="%F{reset_color}>%f"
+          out+="%F{magenta}>%f"
         fi
       fi
     fi
