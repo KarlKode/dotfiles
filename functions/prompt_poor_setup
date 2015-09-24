@@ -1,0 +1,345 @@
+# vim:ft=zsh ts=2 sw=2 sts=2
+#
+# Poor
+# by Marc Gähwiler
+# https://githb.com/KarlKode/poor
+#
+# Based on Pure
+# by Sindre Sorhus
+# https://github.com/sindresorhus/pure
+# MIT License
+
+# For my own and others sanity
+# vcs_info:
+# %b => current branch
+# %a => current action (rebase/merge)
+# %c
+# %u
+# prompt:
+# %F => color dict
+# %f => reset color
+# %K => background color dict
+# %k => reset background color
+# %~ => current path
+# %* => time
+# %n => username
+# %m => shortname host
+# %(?..) => prompt conditional - %(condition.true.false)
+
+BRANCH="\ue0a0"
+DETACHED="\u27a6"
+STAGED="+"
+UNSTAGED="*"
+CROSS="\u2718"
+LIGHTNING="\u26a1"
+GEAR="\u2699"
+CARRET="\u276f"
+BRACKET_LEFT="["
+BRACKET_RIGHT="]"
+#ARROW_UP="\u2191"
+ARROW_UP="\u21e1"
+#ARROW_DOWN="\u2193"
+ARROW_DOWN="\u21e3"
+
+# turns seconds into human readable time
+# 165392 => 1d 21h 56m 32s
+# https://github.com/sindresorhus/pretty-time-zsh
+prompt_pure_human_time_to_var() {
+	local human=" " total_seconds=$1 var=$2
+	local days=$(( total_seconds / 60 / 60 / 24 ))
+	local hours=$(( total_seconds / 60 / 60 % 24 ))
+	local minutes=$(( total_seconds / 60 % 60 ))
+	local seconds=$(( total_seconds % 60 ))
+	(( days > 0 )) && human+="${days}d "
+	(( hours > 0 )) && human+="${hours}h "
+	(( minutes > 0 )) && human+="${minutes}m "
+	human+="${seconds}s"
+
+	# store human readable time in variable as specified by caller
+	typeset -g "${var}"="${human}"
+}
+
+# stores (into prompt_pure_cmd_exec_time) the exec time of the last command if set threshold was exceeded
+prompt_pure_check_cmd_exec_time() {
+	integer elapsed
+	(( elapsed = EPOCHSECONDS - ${prompt_pure_cmd_timestamp:-$EPOCHSECONDS} ))
+	prompt_pure_cmd_exec_time=
+	(( elapsed > ${PURE_CMD_MAX_EXEC_TIME:=5} )) && {
+		prompt_pure_human_time_to_var $elapsed "prompt_pure_cmd_exec_time"
+	}
+}
+
+prompt_pure_clear_screen() {
+	# enable output to terminal
+	zle -I
+	# clear screen and move cursor to (0, 0)
+	print -n '\e[2J\e[0;0H'
+	# print preprompt
+	prompt_pure_preprompt_render
+}
+
+prompt_pure_check_git_arrows() {
+	# reset git arrows
+	prompt_pure_git_arrows=
+
+	# check if there is an upstream configured for this branch
+	command git rev-parse --abbrev-ref @'{u}' &>/dev/null || return
+
+	local arrow_status
+	# check git left and right arrow_status
+	arrow_status="$(command git rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)"
+	# exit if the command failed
+	(( !$? )) || return
+
+	# left and right are tab-separated, split on tab and store as array
+	arrow_status=(${(ps:\t:)arrow_status})
+	local arrows left=${arrow_status[1]} right=${arrow_status[2]}
+
+	(( ${right:-0} > 0 )) && arrows+="${PURE_GIT_DOWN_ARROW:-⇣}"
+	(( ${left:-0} > 0 )) && arrows+="${PURE_GIT_UP_ARROW:-⇡}"
+
+	[[ -n $arrows ]] && prompt_pure_git_arrows=" ${arrows}"
+}
+
+prompt_pure_preexec() {
+	prompt_pure_cmd_timestamp=$EPOCHSECONDS
+
+	# tell the terminal we are setting the title
+	print -Pn "\e]0;"
+	# show hostname if connected through ssh
+	[[ "$SSH_CONNECTION" != '' ]] && print -Pn "(%m) "
+	# shows the current dir and executed command in the title when a process is active
+	# (use print -r to disable potential evaluation of escape characters in cmd)
+	print -nr "$PWD:t: $2"
+	print -Pn "\a"
+}
+
+# string length ignoring ansi escapes
+prompt_pure_string_length_to_var() {
+	local str=$1 var=$2 length
+	# perform expansion on str and check length
+	length=$(( ${#${(S%%)str//(\%([KF1]|)\{*\}|\%[Bbkf])}} ))
+
+	# store string length in variable as specified by caller
+	typeset -g "${var}"="${length}"
+}
+
+prompt_pure_preprompt_render() {
+	# set color for git branch/dirty status, change color if dirty checking has been delayed
+	local git_color=green
+	[[ -n ${prompt_pure_git_last_dirty_check_timestamp+x} ]] && git_color=red
+
+	# construct preprompt, beginning with path
+	local preprompt="%F{blue}%~%f"
+	# git info
+	preprompt+="%F{$git_color}${vcs_info_msg_0_}${prompt_pure_git_dirty}%f"
+	# git pull/push arrows
+	preprompt+="%F{cyan}${prompt_pure_git_arrows}%f"
+	# username and machine if applicable
+	preprompt+=$prompt_pure_username
+	# execution time
+	preprompt+="%F{yellow}${prompt_pure_cmd_exec_time}%f"
+
+	print -P "\n${preprompt}"
+
+}
+
+prompt_pure_precmd() {
+	# check exec time and store it in a variable
+	prompt_pure_check_cmd_exec_time
+
+	# get vcs info
+	vcs_info
+
+  # store working_tree without the "x" prefix
+	local working_tree="${vcs_info_msg_1_#x}"
+
+	# check if the working tree changed (prompt_pure_current_working_tree is prefixed by "x")
+	if [[ ${prompt_pure_current_working_tree#x} != $working_tree ]]; then
+		# reset git preprompt variables, switching working tree
+		unset prompt_pure_git_dirty
+		unset prompt_pure_git_last_dirty_check_timestamp
+
+		# set the new working tree and prefix with "x" to prevent the creation of a named path by AUTO_NAME_DIRS
+		prompt_pure_current_working_tree="x${working_tree}"
+	fi
+
+	# only perform tasks inside git working tree
+	if [[ -n $working_tree ]]; then
+  	# do not preform git fetch if it is disabled or working_tree == HOME
+	  if (( ${PURE_GIT_PULL:-1} )) && [[ $working_tree != $HOME ]]; then
+    	(
+        # use cd -q to avoid side effects of changing directory, e.g. chpwd hooks
+        cd -q "$working_tree"
+
+        # set GIT_TERMINAL_PROMPT=0 to disable auth prompting for git fetch (git 2.3+)
+  	    GIT_TERMINAL_PROMPT=0 command git -c gc.auto=0 fetch
+      )
+	  fi
+
+	  # if dirty checking is sufficiently fast, tell worker to check it again, or wait for timeout
+	  integer time_since_last_dirty_check=$(( EPOCHSECONDS - ${prompt_pure_git_last_dirty_check_timestamp:-0} ))
+	  integer exec_time=0
+    if (( time_since_last_dirty_check > ${PURE_GIT_DELAY_DIRTY_CHECK:-1800} )); then
+		  unset prompt_pure_git_last_dirty_check_timestamp
+
+      start=$EPOCHSECONDS
+
+      (
+        cd -q "$working_three"
+
+  	    if [[ "$untracked_dirty" == "0" ]]; then
+	  	    command git diff --no-ext-diff --quiet --exit-code
+  	    else
+	  	    test -z "$(command git status --porcelain --ignore-submodules -unormal)"
+	      fi
+      )
+
+	    (( $? )) && prompt_pure_git_dirty="%F{red}*%f" || prompt_pure_git_dirty=""
+
+      # When prompt_pure_git_last_dirty_check_timestamp is set, the git info is displayed in a different color.
+  		# To distinguish between a "fresh" and a "cached" result, the preprompt is rendered before setting this
+  		# variable. Thus, only upon next rendering of the preprompt will the result appear in a different color.
+      exec_time=$(( EPOCHSECONDS - start ))
+      (( $exec_time > 1 )) && prompt_pure_git_last_dirty_check_timestamp=$EPOCHSECONDS
+	  fi
+  fi
+
+	prompt_pure_check_git_arrows
+	prompt_pure_preprompt_render
+}
+
+
+prompt_poor_venv() {
+  print -P ""
+}
+
+prompt_poor_dir() {
+  print -Pn "%F{blue}%~%f"
+}
+
+prompt_poor_git() {
+  if [[ -n "$vcs_info_msg_0_" ]]; then
+    local color suffix
+    if [[ -n "${vcs_info_msg_3_}${vcs_info_msg_4_}" ]]; then
+      color=yellow
+      suffix="${vcs_info_msg_3_}${vcs_info_msg_4_}"
+    else
+      color=green
+    fi
+    local out
+    out=" %F{white}$BRACKET_LEFT%f"
+    out+="%F{$color}${vcs_info_msg_0_}%f"
+    out+="${vcs_info_msg_1_}"
+    out+="${suffix}"
+    out+="%F{white}$BRACKET_RIGHT%f"
+
+    # How many commit between the current upstream and the local branch
+    command git rev-parse --abbrev-ref @'{u}' &>/dev/null
+    if [[ $? -eq 0 ]]; then
+      local rev_list="$(command git rev-list --left-right --count HEAD...@'{u}' 2>/dev/null)"
+      if [[ $? -eq 0 ]]; then
+        rev_list=(${(ps:\t:)rev_list})
+        integer left=${rev_list[1]} right=${rev_list[2]}
+        if [[ ${left}+${right} -gt 0 ]]; then
+          out+="  %F{reset_color}<%f"
+          out+="%F{cyan}${left}%f%F{magenta}$ARROW_UP%f"
+          out+=":%F{magenta}$ARROW_DOWN%f%F{cyan}${right}%f"
+          out+="%F{reset_color}>%f"
+        fi
+      fi
+    fi
+
+    print -Pn $out
+  fi
+}
+
+prompt_poor_exectime() {
+  [[ -z ${START_TIME+x} ]] && return
+
+  integer exec_time=$(( EPOCHSECONDS - START_TIME ))
+  unset START_TIME
+
+  if [[ exec_time -gt 5 ]]; then
+    local human=""
+	  local days=$(( exec_time / 60 / 60 / 24 ))
+	  local hours=$(( exec_time / 60 / 60 % 24 ))
+	  local minutes=$(( exec_time / 60 % 60 ))
+	  local seconds=$(( exec_time % 60 ))
+	  (( days > 0 )) && human+="${days}d "
+	  (( hours > 0 )) && human+="${hours}h "
+	  (( minutes > 0 )) && human+="${minutes}m "
+	  human+="${seconds}s"
+    print -Pn " %F{yellow}${human}%f"
+  fi
+}
+
+prompt_poor_end() {
+  local out=" "
+  [[ $RETVAL -ne 0 ]] && out="%F{red}$CROSS%f"
+  print -Pn "\n${out} %F{blue}$CARRET%f"
+}
+
+prompt_poor_ssh() {
+	[[ "$SSH_CONNECTION" != '' ]] && print -Pn '%F{blue}%n%f%F{white}@%f%F{yellow}%m%f '
+}
+
+prompt_poor_time() {
+  print -Pn '$(date +%T) %F{white}[%f%F{yellow}%!%f%F{white}]%f'
+}
+
+prompt_poor() {
+  prompt_poor_venv
+  prompt_poor_dir
+  prompt_poor_git
+  prompt_poor_exectime
+  prompt_poor_end
+}
+
+prompt_poor_precmd() {
+  RETVAL=$?
+  vcs_info
+}
+
+prompt_poor_preexec() {
+  START_TIME=$EPOCHSECONDS
+}
+
+prompt_poor_setup() {
+	# prevent percentage showing up
+	# if output doesn't end with a newline
+	#export PROMPT_EOL_MARK=''
+
+	prompt_opts=(subst percent)
+
+	zmodload zsh/datetime
+	#zmodload zsh/zle
+	autoload -Uz add-zsh-hook
+	autoload -Uz vcs_info
+
+	add-zsh-hook precmd prompt_poor_precmd
+	add-zsh-hook preexec prompt_poor_preexec
+
+	zstyle ':vcs_info:*' enable git hg bzr
+#	zstyle ':vcs_info:*' use-simple true
+	# only export two msg variables from vcs_info
+	zstyle ':vcs_info:*' max-exports 5
+  zstyle ':vcs_info:*' unstagedstr "%F{orange}$UNSTAGED%f"
+  zstyle ':vcs_info:*' stagedstr "%F{green}$STAGED%f"
+  zstyle ':vcs_info:*' check-for-changes true
+  zstyle ':vcs_info:hg:*' get-revision true
+  zstyle ':vcs_info:bzr:*' use-server true
+	# vcs_info_msg_0_ = ' %b' (for branch)
+	# vcs_info_msg_1_ = 'x%R' git top level (%R), x-prefix prevents creation of a named path (AUTO_NAME_DIRS)
+	zstyle ':vcs_info:*:*' formats '%b' '%a' 'x%R' '%u' '%c'
+	zstyle ':vcs_info:*:*' actionformats '%b' '%F{white}|%f%F{yellow}%a%f' 'x%R' '%u' '%c'
+
+	# show username@host if logged in through SSH
+
+  PROMPT='$(prompt_poor) '
+  #RPROMPT='%{%f%b%k%}$(prompt_poor_ssh)$(prompt_poor_time)'
+  #RPROMPT='$(date +%T) %F{white}[%f%F{yellow}%!%f%F{white}]%f'
+}
+
+prompt_poor_setup "$@"
+

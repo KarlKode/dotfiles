@@ -35,3 +35,11 @@ bindkey '^[[3~' delete-char
 bindkey '^[^N' newtab
 bindkey '^?' backward-delete-char
 
+autoload -U promptinit && promptinit
+#export PURE_GIT_UNTRACKED_DIRTY=0
+#export PURE_GIT_DELAY_DIRTY_CHECK=1
+#prompt pure
+prompt poor
+#prompt paradox
+#prompt agnoster
+
