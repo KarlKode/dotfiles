@@ -21,26 +21,16 @@ setopt autoparamslash
 setopt no_bg_nice # don't nice background tasks
 setopt no_hup
 setopt local_options # allow functions to have local options
-setopt local_traps # allow functions to have local traps
+unsetopt local_traps # allow functions to have local traps
 setopt prompt_subst
 setopt correct
 # setopt ignore_eof
 
-zle -N newtab
-
-bindkey '^[^[[D' backward-word
-bindkey '^[^[[C' forward-word
-bindkey '^[[5D' beginning-of-line
-bindkey '^[[5C' end-of-line
-bindkey '^[[3~' delete-char
-bindkey '^[^N' newtab
-bindkey '^?' backward-delete-char
-
-autoload -U promptinit && promptinit
+#autoload -U promptinit && promptinit
 #export PURE_GIT_UNTRACKED_DIRTY=0
 #export PURE_GIT_DELAY_DIRTY_CHECK=1
 #prompt pure
-prompt poor
+#prompt poor
 #prompt paradox
 #prompt agnoster
 
