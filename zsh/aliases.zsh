@@ -13,10 +13,6 @@ alias -g G='| grep' # now you can do: ls foo G something
 
 # Functions
 #
-alias ..='cd ..'
-alias ...='cd ...'
-alias ....='cd ....'
-alias .....='cd .....'
 
 
 # (f)ind by (n)ame
