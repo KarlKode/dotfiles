@@ -1,6 +1,6 @@
 zmodload zsh/terminfo
 
-bindkey -v
+bindkey -e
 
 vim_ins_mode="[INS]"
 vim_cmd_mode="[CMD]"
@@ -10,21 +10,21 @@ function zle-keymap-select {
   vim_mode="${${KEYMAP/vicmd/${vim_cmd_mode}}/(main|viins)/${vim_ins_mode}}"
   zle reset-prompt
 }
-zle -N zle-keymap-select
+#zle -N zle-keymap-select
 
 function zle-line-finish {
   vim_mode=$vim_ins_mode
 }
-zle -N zle-line-finish
+#zle -N zle-line-finish
 
-#bindkey '^r' history-incremental-search-backward
-#bindkey '^[^[[D' backward-word
-#bindkey '^[^[[C' forward-word
-#bindkey '^[[5D' beginning-of-line
-#bindkey '^[[5C' end-of-line
-#bindkey '^[[3~' delete-char
-#bindkey '^[^N' newtab
-#bindkey '^?' backward-delete-char
+bindkey '^r' history-incremental-search-backward
+bindkey '^[^[[D' backward-word
+bindkey '^[^[[C' forward-word
+bindkey '^[[5D' beginning-of-line
+bindkey '^[[5C' end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^[^N' newtab
+bindkey '^?' backward-delete-char
 
 
 # Make sure that the terminal is in application mode when zle is active, since
@@ -41,10 +41,10 @@ if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
 fi
 
 # up/down arrow keys
-bindkey "$terminfo[kcuu1]" up-line-or-history
-bindkey "$terminfo[kcud1]" up-line-or-history
-#bindkey '^[[A' history-substring-search-up
-#bindkey '^[[B' history-substring-search-down
+#bindkey "$terminfo[kcuu1]" up-line-or-history
+#bindkey "$terminfo[kcud1]" up-line-or-history
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
 
 # bind P and N for EMACS mode
 bindkey -M emacs '^P' up-line-or-history
@@ -60,6 +60,6 @@ bindkey ' ' magic-space
 bindkey "${terminfo[kcbt]}" reverse-menu-complete
 
 # Home/End keys
-#bindkey "${terminfo[khome]}" beginning-of-line
-#bindkey "${terminfo[kend]}"  end-of-line
+bindkey "${terminfo[khome]}" beginning-of-line
+bindkey "${terminfo[kend]}"  end-of-line
 

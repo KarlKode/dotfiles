@@ -17,6 +17,7 @@ fpath=(~/.zsh/functions \
 
 autoload -U $ZSH/functions/*(:t)
 
+setopt autocd
 setopt autoparamslash
 setopt no_bg_nice # don't nice background tasks
 setopt no_hup
