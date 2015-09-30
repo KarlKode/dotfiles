@@ -2,9 +2,12 @@
 command -v pyenv > /dev/null 2>&1 || return
 
 export PYENV_VIRTUALENVWRAPPER_PREFER_PYVENV="true"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-pyenv virtualenvwrapper_lazy
+#function pyenv {
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
+  pyenv virtualenvwrapper_lazy
+#  command pyenv "$@"
+#}
 
 export VIRTUAL_ENV_DISABLE_PROMPT=true
 
