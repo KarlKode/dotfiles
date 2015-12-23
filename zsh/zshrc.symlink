@@ -6,12 +6,17 @@ export ZSH=$HOME/.dotfiles
 # your project folder that we can `c [tab]` to
 export PROJECTS=~/Code
 
+#zmodload zsh/zprof
+
 # Stash your environment variables in ~/.localrc. This means they'll stay out
 # of your main dotfiles repository (which may be public, like this one), but
 # you'll have access to them in your scripts.
 if [[ -a ~/.localrc ]]
 then
+  #echo localrc
+  #zprof -c
   source ~/.localrc
+  #zprof
 fi
 
 # all of our zsh files
@@ -30,23 +35,39 @@ fi
 # load the path files
 for file in ${(M)config_files:#*/path.zsh}
 do
+  #echo $file
+  #zprof -c
   source $file
+  #zprof
 done
 
 # load everything but the path and completion files
 for file in ${${${config_files:#*/path.zsh}:#*/completion.zsh}:#*/*.plugin.zsh}
 do
+  #echo $file
+  #zprof -c
   source $file
+  #zprof
 done
 
 # initialize autocomplete here, otherwise functions won't be loaded
+#echo autoloadcompinit
+#zprof -c
 autoload -U compinit
+#zprof
+
+#echo compinit
+#zprof -c
 compinit
+#zprof
 
 # load every completion after autocomplete loads
 for file in ${(M)config_files:#*/completion*.zsh}
 do
+  #echo $file
+  #zprof -c
   source $file
+  #zprof
 done
 
 unset cache_reboot
