@@ -1,9 +1,9 @@
 [submodule "zsh/pure"]
 	path = zsh/pure
-	url = git@github.com:KarlKode/pure.git
+	url = https://github.com/KarlKode/pure.git
 [submodule "zsh/zsh-history-substring-search"]
 	path = zsh/zsh-history-substring-search
-	url = git@github.com:zsh-users/zsh-history-substring-search.git
+	url = https://github.com/zsh-users/zsh-history-substring-search.git
 [submodule "fasd/fasd"]
 	path = fasd/fasd
 	url = https://github.com/clvv/fasd.git
