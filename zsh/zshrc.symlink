@@ -26,7 +26,7 @@ config_files=($ZSH/**/*.zsh)
 # cache certain commands
 integer cache_reboot
 if [ "$(uname)" = "Darwin" ]; then
-  ((cache_reboot=`date +%s`-`sysctl kern.boottime | cut -c24-33`))
+  ((cache_reboot=`date +%s`-`/usr/sbin/sysctl kern.boottime | cut -c24-33`))
 else
   ((cache_reboot=`date +%s`-`awk '{print $1}' /proc/uptime`))
 fi
