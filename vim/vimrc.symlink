@@ -107,7 +107,8 @@ set hlsearch        " Highlight searches by default
 set ignorecase      " Ignore case when searching...
 set smartcase       " ...unless we type a capital
 
-" ================ Solarized Dark Colorscheme =======
-set background=dark
+" ================ Solarized Light/Dark Colorscheme =======
+set background=light
+" set background=dark
 colorscheme solarized
 
