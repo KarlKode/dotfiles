@@ -1,0 +1,27 @@
+#kubectl () {
+#    command kubectl $*
+#    if [[ -z $KUBECTL_COMPLETE ]]
+#    then
+#        source <(command kubectl completion zsh)
+#        KUBECTL_COMPLETE=1
+#    fi
+#}
+#
+
+#(( ${+commands[kubectl]} )) && alias kubectl='test -z $C_KUBE && C_KUBE=1 && source <(command kubectl completion zsh); command kubectl'
+
+if (( $+commands[kubectl] )); then
+    __KUBECTL_COMPLETION_FILE="${ZSH_CACHE_DIR}/kubectl_completion"
+
+    if [[ ! -f $__KUBECTL_COMPLETION_FILE ]]; then
+        echo "KUBE"
+        echo "WHO: $(whoami)"
+        kubectl completion zsh >! $__KUBECTL_COMPLETION_FILE
+        echo "DONE"
+    fi
+
+    [[ -f $__KUBECTL_COMPLETION_FILE ]] && source $__KUBECTL_COMPLETION_FILE
+
+    unset __KUBECTL_COMPLETION_FILE
+fi
+

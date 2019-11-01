@@ -8,6 +8,7 @@ export VIRTUAL_ENV_DISABLE_PROMPT=true
 
 function pyenv() {
   unset -f pyenv
+#  echo "test"
   eval "$(pyenv init --no-rehash - zsh)"
   eval "$(pyenv virtualenv-init -)"
   pyenv virtualenvwrapper
