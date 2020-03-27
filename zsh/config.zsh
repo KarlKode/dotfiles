@@ -6,7 +6,10 @@ fi
 
 #export LSCOLORS="exfxcxdxbxegedabagacad"
 #export CLICOLOR=true
-export TERM=screen-256color
+
+#export TERM=screen-256color
+export TERM=xterm-256color
+
 #only try to set the colors if the gdircolors executeable is available
 command -v gdircolors > /dev/null 2>&1 && eval `gdircolors ~/.dircolors`
 

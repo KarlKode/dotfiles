@@ -108,7 +108,8 @@ set ignorecase      " Ignore case when searching...
 set smartcase       " ...unless we type a capital
 
 " ================ Solarized Light/Dark Colorscheme =======
-set background=light
+"set background=light
 " set background=dark
-colorscheme solarized
+"colorscheme solarized
+colorscheme nord
 

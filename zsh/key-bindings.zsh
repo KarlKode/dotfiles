@@ -10,7 +10,9 @@ bindkey "${terminfo[kdch1]}" delete-char
 
 # up/down arrow keys
 bindkey "${terminfo[kcuu1]}" history-substring-search-up
+bindkey "${terminfo[cuu1]}" history-substring-search-up
 bindkey "${terminfo[kcud1]}" history-substring-search-down
+bindkey "${terminfo[cud1]}" history-substring-search-down
 
 # bind P and N for EMACS mode
 bindkey -M emacs '^P' history-substring-search-up
@@ -27,5 +29,7 @@ bindkey "${terminfo[kcbt]}" reverse-menu-complete
 
 # home/end (fn-left arrow/fn-right arrow) keys
 bindkey "${terminfo[khome]}" beginning-of-line
+bindkey "${terminfo[home]}" beginning-of-line
 bindkey "${terminfo[kend]}"  end-of-line
+bindkey "^[[F"  end-of-line
 
